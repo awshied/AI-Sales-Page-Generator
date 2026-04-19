@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "AI Content Generator",
-  description: "Buat konten menarik dengan bantuan AI",
+  description: "Create an engaging content with AI-Powered application.",
 };
 
 export default function RootLayout({

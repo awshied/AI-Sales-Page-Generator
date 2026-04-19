@@ -2,26 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 
 export default function Navigation() {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const navItems = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/generate", label: "Buat Konten" },
-    { href: "/history", label: "Riwayat" },
+    { href: "/dashboard", label: "🏠 Dashboard" },
+    { href: "/generate", label: "✨ Create" },
+    { href: "/history", label: "📜 History" },
   ];
 
   return (
-    <nav className="bg-white shadow-md">
+    <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-blue-600">
-                AI Content Generator
-              </span>
+            <div className="shrink-0 flex items-center">
+              <Link
+                href="/dashboard"
+                className="text-xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+              >
+                ✨ AI Content Gen
+              </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navItems.map((item) => (
@@ -39,10 +44,32 @@ export default function Navigation() {
               ))}
             </div>
           </div>
-          <div className="flex items-center">
+
+          <div className="flex items-center gap-4">
+            {/* User info */}
+            <div className="hidden sm:flex items-center gap-2">
+              {session?.user?.image ? (
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name || "User"}
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-linear-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white text-sm font-bold">
+                  {session?.user?.name?.charAt(0) || "U"}
+                </div>
+              )}
+              <span className="text-sm text-gray-700">
+                {session?.user?.name?.split(" ")[0] || "User"}
+              </span>
+            </div>
+
+            {/* Logout button */}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+              className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
             >
               Logout
             </button>

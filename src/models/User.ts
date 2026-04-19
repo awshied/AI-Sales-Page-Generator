@@ -1,4 +1,3 @@
-// src/models/User.ts
 import mongoose, { Schema, model } from "mongoose";
 
 export interface IUser {
@@ -15,11 +14,11 @@ const UserSchema = new Schema<IUser>(
   {
     name: {
       type: String,
-      required: [true, "Nama harus diisi"],
+      required: [true, "Name is required."],
     },
     email: {
       type: String,
-      required: [true, "Email harus diisi"],
+      required: [true, "Email must be filled."],
       unique: true,
       lowercase: true,
     },

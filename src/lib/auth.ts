@@ -23,7 +23,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email dan password harus diisi");
+          throw new Error("Email and password are required.");
         }
 
         await dbConnect();
@@ -33,14 +33,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
           .select("+password")
           .lean();
+
         if (!user) {
-          throw new Error("Email tidak terdaftar");
+          throw new Error("Email not registered.");
         }
 
         const userPassword = user.password as string;
+
         if (!userPassword) {
           throw new Error(
-            "Akun ini tidak memiliki password (mungkin terdaftar dengan GitHub)",
+            "This account uses GitHub login. Please sign in with GitHub.",
           );
         }
 
@@ -48,8 +50,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           credentials.password as string,
           userPassword,
         );
+
         if (!isValid) {
-          throw new Error("Password salah");
+          throw new Error("Invalid password");
         }
 
         return {
@@ -81,8 +84,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async signIn({ user, account }) {
-      console.log(`User signed in: ${user.email} via ${account?.provider}`);
+      console.log(`✅ User signed in: ${user.email} via ${account?.provider}`);
       return true;
     },
   },
+  debug: process.env.NODE_ENV === "development",
 });

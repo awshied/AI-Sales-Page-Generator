@@ -1,4 +1,3 @@
-// src/models/GeneratedContent.ts
 import mongoose, { Schema, model } from "mongoose";
 
 export interface IGeneratedContent {

@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navigation from "@/src/components/Navigation";
 import LoadingSpinner from "@/src/components/LoadingSpinner";
 
@@ -13,6 +13,11 @@ export default function ProtectedLayout({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -20,7 +25,7 @@ export default function ProtectedLayout({
     }
   }, [status, router]);
 
-  if (status === "loading") {
+  if (!isClient || status === "loading") {
     return <LoadingSpinner />;
   }
 
