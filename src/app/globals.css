@@ -1,4 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap");
 @import "tailwindcss";
+
+@theme {
+  --base-100: #0f172a;
+  --base-200: #0c1425;
+  --base-300: #0a1120;
+
+  --primary-color: #2fd4bf;
+  --secondary-color: #3949ab;
+  --legendary-color: #1e293b;
+
+  --info-alert: #0ca5e9;
+  --success-alert: #2fd4bf;
+  --warning-alert: #ffc586;
+  --error-alert: #fb7085;
+
+  --font-poppins: "Poppins", ui-sans-serif, system-ui, sans-serif;
+}
 
 :root {
   --background: #ffffff;
@@ -8,8 +26,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-base-100: var(--base-100);
+  --color-base-200: var(--base-200);
+  --color-base-300: var(--base-300);
+
+  --color-primary: var(--primary-color);
+  --color-secondary: var(--secondary-color);
+  --color-legendary: var(--legendary-color);
+
+  --color-info: var(--info-alert);
+  --color-success: var(--success-alert);
+  --color-warning: var(--warning-alert);
+  --color-error: var(--error-alert);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +51,12 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins);
+}
+
+@layer components {
+  .icon-active-yellow {
+    filter: brightness(0) saturate(100%) invert(96%) sepia(84%) saturate(6118%)
+      hue-rotate(302deg) brightness(105%) contrast(101%);
+  }
 }

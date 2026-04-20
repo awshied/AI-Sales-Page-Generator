@@ -8,7 +8,10 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "AI Sales Page Generator",
-  description: "Create high-quality content with AI-Powered application.",
+  description: "Create high-quality sales page with AI-Powered application.",
+  icons: {
+    icon: "/ai-logo.png",
+  },
 };
 
 export default function RootLayout({

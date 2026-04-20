@@ -5,6 +5,12 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LoadingSpinner from "@/src/components/LoadingSpinner";
+import FloatingInput from "@/src/components/FloatingInput";
+import Image from "next/image";
+
+import aiLogo from "@/src/assets/ai-logo.png";
+import emailIcon from "@/src/assets/email.png";
+import passwordIcon from "@/src/assets/password.png";
 
 export default function LoginPage() {
   const { status } = useSession();
@@ -53,56 +59,53 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-purple-50">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">✨</div>
-          <h1 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            AI Content Generator
+    <div className="min-h-screen flex items-center justify-center bg-base-300">
+      <div className="bg-base-100 p-8 rounded-2xl shadow-xl w-ful max-w-88 md:max-w-xl">
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Image
+            src={aiLogo}
+            alt="logo"
+            width={52}
+            height={52}
+            className="mb-4"
+          />
+          <h1 className="text-xl md:text-2xl font-extrabold text-primary font-poppins">
+            Login
           </h1>
-          <p className="text-gray-500 text-sm mt-2">Login to your account</p>
+          <p className="font-semibold text-gray-500 text-sm mt-2">
+            Login to your account and generating a sales page using our tools
+          </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+          <div className="bg-error/20 border border-error text-error px-4 py-3 rounded-lg mb-4 text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-black"
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6 flex flex-col">
+          <FloatingInput
+            label="Email Address"
+            name="email"
+            type="email"
+            icon={emailIcon}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-          <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-black"
-              required
-            />
-          </div>
+          <FloatingInput
+            label="Password"
+            name="password"
+            type="password"
+            icon={passwordIcon}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-secondary hover:bg-secondary/70 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {loading ? "Logging in..." : "Sign In"}
           </button>
@@ -110,10 +113,10 @@ export default function LoginPage() {
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+            <div className="w-full border-t border-gray-600"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">
+            <span className="px-2 bg-base-100 text-gray-500">
               Or continue with
             </span>
           </div>
@@ -121,7 +124,7 @@ export default function LoginPage() {
 
         <button
           onClick={handleGithubSignIn}
-          className="w-full bg-gray-800 hover:bg-gray-900 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+          className="w-full bg-base-300 hover:bg-base-300/70 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
         >
           <svg
             className="w-5 h-5"
@@ -138,11 +141,11 @@ export default function LoginPage() {
           GitHub
         </button>
 
-        <p className="text-center text-gray-600 text-sm mt-6">
+        <p className="text-center text-gray-500 text-sm font-semibold mt-6">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="text-warning hover:text-warning/70 font-bold"
           >
             Create account
           </Link>

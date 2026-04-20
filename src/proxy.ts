@@ -5,9 +5,13 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const { pathname } = req.nextUrl;
 
+  if (pathname === "/") {
+    return;
+  }
+
   console.log(`🔍 Middleware - Path: ${pathname}, IsLoggedIn: ${isLoggedIn}`);
 
-  const protectedRoutes = ["/dashboard", "/generate", "/history"];
+  const protectedRoutes = ["/dashboard", "/history", "/preview"];
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route),
   );
@@ -31,8 +35,8 @@ export default auth((req) => {
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/generate/:path*",
     "/history/:path*",
+    "/preview/:path*",
     "/login",
     "/register",
   ],
