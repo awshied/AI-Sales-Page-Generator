@@ -7,8 +7,8 @@ import SessionProvider from "@/src/components/SessionProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AI Content Generator",
-  description: "Create an engaging content with AI-Powered application.",
+  title: "AI Sales Page Generator",
+  description: "Create high-quality content with AI-Powered application.",
 };
 
 export default function RootLayout({
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
+    <html lang="en">
       <body className={inter.className}>
         <SessionProvider>{children}</SessionProvider>
       </body>

@@ -52,7 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!isValid) {
-          throw new Error("Invalid password");
+          throw new Error("Invalid password.");
         }
 
         return {
@@ -88,5 +88,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true;
     },
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: false,
 });

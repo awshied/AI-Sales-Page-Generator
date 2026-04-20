@@ -5,15 +5,11 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/src/components/LoadingSpinner";
 
-interface GeneratedContent {
-  id: string;
-  contentType: string;
-  topic: string;
-  keywords: string;
-  targetAudience: string;
-  tone: string;
-  outputContent: string;
-  createdAt: string;
+interface GeneratedSales {
+  _id: string;
+  productName: string;
+  headline: string;
+  fullHtml: string;
 }
 
 export default function DashboardPage() {
@@ -21,32 +17,15 @@ export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [generated, setGenerated] = useState<GeneratedContent | null>(null);
+  const [generated, setGenerated] = useState<GeneratedSales | null>(null);
 
-  const [contentType, setContentType] = useState("blog");
-  const [topic, setTopic] = useState("");
-  const [keywords, setKeywords] = useState("");
+  const [productName, setProductName] = useState("");
+  const [productDescription, setProductDescription] = useState("");
+  const [features, setFeatures] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
-  const [tone, setTone] = useState("formal");
+  const [price, setPrice] = useState("");
+  const [usp, setUsp] = useState("");
 
-  const contentTypes = [
-    { value: "blog", label: "📝 Blog" },
-    { value: "social_media", label: "📱 Social Media" },
-    { value: "email", label: "✉️ Email Marketing" },
-    { value: "ad_copy", label: "📢 Advertisement" },
-    { value: "product_desc", label: "🏷️ Product Description" },
-  ];
-
-  const tones = [
-    { value: "formal", label: "Formal" },
-    { value: "casual", label: "Casual" },
-    { value: "persuasive", label: "Pesuasive" },
-    { value: "humorous", label: "Humorous" },
-    { value: "inspirational", label: "Inspirational" },
-    { value: "professional", label: "Professional" },
-  ];
-
-  // Redirect if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
@@ -74,18 +53,19 @@ export default function DashboardPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          contentType,
-          topic,
-          keywords,
+          productName,
+          productDescription,
+          features,
           targetAudience,
-          tone,
+          price,
+          usp,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to generate content");
+        throw new Error(data.message || "Failed to generate sales page.");
       }
 
       setGenerated(data.data);
@@ -98,31 +78,6 @@ export default function DashboardPage() {
     }
   };
 
-  const copyToClipboard = async () => {
-    if (generated?.outputContent) {
-      try {
-        await navigator.clipboard.writeText(generated.outputContent);
-        alert("✅ Content copied to clipboard!");
-      } catch {
-        alert("❌ Failed to copy to clipboard");
-      }
-    }
-  };
-
-  const downloadAsTxt = () => {
-    if (generated?.outputContent) {
-      const blob = new Blob([generated.outputContent], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `content_${generated.topic.slice(0, 30).replace(/[^a-z0-9]/gi, "_")}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -131,57 +86,54 @@ export default function DashboardPage() {
           Welcome, {session?.user?.name || "User"}! 👋
         </h1>
         <p className="text-gray-600 mt-2">
-          Create high-quality content with AI in seconds.
+          Create a high-converting sales page with AI-Powered in a couple of
+          minutes.
         </p>
       </div>
 
       {/* Form Generate */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">✨ Create New Content</h2>
+      <div className="bg-white rounded-lg shadow p-6 text-gray-700">
+        <h2 className="text-xl font-semibold mb-4">🚀 Generate Sales Page</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Content Type *
-            </label>
-            <select
-              value={contentType}
-              onChange={(e) => setContentType(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            >
-              {contentTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Topic *
+              Product/Service Name *
             </label>
             <input
               type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g., Benefits of drinking water, How to start investing..."
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+              placeholder="e.g., AI Copywriter Pro, Fitness 30 Days..."
+              className="w-full border border-gray-300 text-black rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Keywords (comma separated) *
+              Description *
+            </label>
+            <textarea
+              value={productDescription}
+              onChange={(e) => setProductDescription(e.target.value)}
+              placeholder="Describe your product/service in detail..."
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Key Features (comma separated) *
             </label>
             <input
               type="text"
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-              placeholder="e.g., healthy, hydration, energy"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
+              value={features}
+              onChange={(e) => setFeatures(e.target.value)}
+              placeholder="e.g., Easy to use, 24/7 support, Money back guarantee"
+              className="w-full border border-gray-300 text-black rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
@@ -194,28 +146,38 @@ export default function DashboardPage() {
               type="text"
               value={targetAudience}
               onChange={(e) => setTargetAudience(e.target.value)}
-              placeholder="e.g., College students, Working professionals..."
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., Small business owners, Fitness enthusiasts, Students"
+              className="w-full border border-gray-300 text-black rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tone *
+              Price *
             </label>
-            <select
-              value={tone}
-              onChange={(e) => setTone(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
+            <input
+              type="text"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Input your product price"
+              className="w-full border border-gray-300 text-black rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
               required
-            >
-              {tones.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Unique Selling Points *
+            </label>
+            <textarea
+              value={usp}
+              onChange={(e) => setUsp(e.target.value)}
+              placeholder="What makes your product special? Why should customers choose you?"
+              rows={2}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+              required
+            />
           </div>
 
           <button
@@ -245,10 +207,10 @@ export default function DashboardPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Generating content...
+                Generating...
               </span>
             ) : (
-              "🚀 Generate Content"
+              "🚀 Generate Sales Page"
             )}
           </button>
         </form>
@@ -275,76 +237,46 @@ export default function DashboardPage() {
       {generated && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-            <h2 className="text-xl font-semibold">📄 Generated Content</h2>
+            <h2 className="text-xl font-semibold">📄 Sales Page Generated</h2>
             <div className="flex gap-2">
-              <button
-                onClick={copyToClipboard}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center gap-2"
+              <a
+                href={`/preview/${generated._id}`}
+                target="_blank"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                  />
-                </svg>
-                Copy
-              </button>
+                👁️ Live Preview
+              </a>
               <button
-                onClick={downloadAsTxt}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center gap-2"
+                onClick={() => {
+                  const blob = new Blob([generated.fullHtml], {
+                    type: "text/html",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  const safeName = generated.productName
+                    .replace(/[<>:"/\\|?*\s]+/g, "_")
+                    .replace(/^_+|_+$/g, "");
+                  a.download = `sales_${safeName || "page"}.html`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                Download .txt
+                💾 Export HTML
               </button>
             </div>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-3 mb-4 text-sm text-gray-600 flex flex-wrap gap-4">
-            <span>
-              📌 <strong>Type:</strong>{" "}
-              {
-                contentTypes.find((t) => t.value === generated.contentType)
-                  ?.label
-              }
-            </span>
-            <span>
-              🎯 <strong>Audience:</strong> {generated.targetAudience}
-            </span>
-            <span>
-              🎨 <strong>Tone:</strong>{" "}
-              {tones.find((t) => t.value === generated.tone)?.label}
-            </span>
-            <span>
-              🔑 <strong>Keywords:</strong> {generated.keywords}
-            </span>
+            <p className="text-green-600 font-semibold">
+              ✓ Headline: {generated.headline}
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Sales page saved to history. Click &quot;Live Preview&quot; to see
+              the full page!
+            </p>
           </div>
-
-          <div className="bg-gray-50 rounded-lg p-6 whitespace-pre-wrap prose max-w-none">
-            {generated.outputContent}
-          </div>
-
-          <p className="text-xs text-gray-400 mt-4">
-            Created on: {new Date(generated.createdAt).toLocaleString("id-ID")}
-          </p>
         </div>
       )}
     </div>

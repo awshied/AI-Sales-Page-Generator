@@ -1,4 +1,4 @@
-// This file is middleware of Next.js
+// This file should be middleware of Next.js
 import { auth } from "@/src/lib/auth";
 
 export default auth((req) => {
