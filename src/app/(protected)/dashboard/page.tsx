@@ -75,22 +75,13 @@ export default function DashboardPage() {
       }
 
       const generatedId = data.data._id;
-      console.log("Generated ID:", generatedId);
 
       const fetchResponse = await fetch(`/api/content/${generatedId}`);
       const fullData = await fetchResponse.json();
 
-      console.log("Fetch from DB response:", fullData);
-      console.log(
-        "Full HTML from DB:",
-        fullData.data?.fullHtml?.substring(0, 100),
-      );
-
       if (fullData.data && fullData.data.fullHtml) {
         setGenerated(fullData.data);
-        console.log("Full HTML length:", fullData.data.fullHtml.length);
       } else {
-        console.warn("No fullHtml in response, using original data.");
         setGenerated(data.data);
       }
     } catch (err) {
@@ -137,20 +128,6 @@ export default function DashboardPage() {
 
     console.log("Export successful, file downloaded as:", a.download);
   };
-
-  useEffect(() => {
-    if (generated) {
-      console.log("=== DEBUG GENERATED OBJECT ===");
-      console.log("generated:", generated);
-      console.log("generated._id:", generated._id);
-      console.log("generated.productName:", generated.productName);
-      console.log("generated.headline:", generated.headline);
-      console.log("generated.fullHtml:", generated.fullHtml);
-      console.log("generated.fullHtml type:", typeof generated.fullHtml);
-      console.log("generated.fullHtml length:", generated.fullHtml?.length);
-      console.log("==============================");
-    }
-  }, [generated]);
 
   return (
     <div className="space-y-6">
@@ -366,7 +343,7 @@ export default function DashboardPage() {
               >
                 <Image
                   src={exportIcon}
-                  alt="Preview Icon"
+                  alt="Export Icon"
                   width={16}
                   height={16}
                 />
@@ -380,9 +357,9 @@ export default function DashboardPage() {
           <div className="rounded-lg p-3 mb-1 flex flex-wrap gap-4">
             <span className="text-success font-semibold text-sm">
               ✓ Headline:{" "}
-              <p className="text-gray-500">
+              <span className="text-gray-500">
                 {generated.headline || "Generated successfully"}
-              </p>
+              </span>
             </span>
             <p className="text-sm text-gray-500 mt-2">
               Sales page saved to history. Click &quot;Live Preview&quot; to see

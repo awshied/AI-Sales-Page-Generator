@@ -217,7 +217,7 @@ export default function HistoryPage() {
         <div className="bg-base-100 rounded-xl shadow-lg p-12 flex flex-col items-center">
           <Image
             src={notFoundIcon}
-            alt="Generate Sales Page Icon"
+            alt="No Result Found"
             width={64}
             height={64}
             className="mb-4"

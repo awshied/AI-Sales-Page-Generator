@@ -169,6 +169,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const requiredFields = [
+      "headline",
+      "subHeadline",
+      "benefitsSection",
+      "featuresBreakdown",
+      "socialProofPlaceholder",
+      "pricingDisplay",
+      "callToAction",
+    ] as const;
+
+    for (const field of requiredFields) {
+      if (!aiResponse[field]) {
+        console.error(`Missing required field: ${field}`, aiResponse);
+        return NextResponse.json(
+          { message: `AI response missing required field: ${field}` },
+          { status: 500 },
+        );
+      }
+    }
+
     const fullHtml = buildFullHtml({
       productName,
       price,
@@ -199,15 +219,6 @@ export async function POST(request: NextRequest) {
       callToAction: aiResponse.callToAction,
       fullHtml,
     });
-
-    console.log("=== API GENERATE RESPONSE ===");
-    console.log("Generated Sales Page ID:", generatedSalesPage._id);
-    console.log("Full HTML length:", generatedSalesPage.fullHtml?.length);
-    console.log(
-      "Full HTML preview:",
-      generatedSalesPage.fullHtml?.substring(0, 200),
-    );
-    console.log("==============================");
 
     return NextResponse.json({
       message: "Sales page generated successfully.",

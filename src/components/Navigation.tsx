@@ -43,9 +43,9 @@ export default function Navigation() {
             <div className="flex items-center">
               <Link href="/dashboard" className="flex gap-3 items-center">
                 <Image src={aiLogo} alt="logo" width={32} height={32} />
-                <big className="text-xl hidden md:flex font-extrabold text-primary font-poppins">
+                <span className="text-xl hidden md:flex font-extrabold text-primary font-poppins">
                   AI Sales Page Gen
-                </big>
+                </span>
               </Link>
 
               {/* Web Navigation */}
@@ -169,7 +169,7 @@ export default function Navigation() {
             >
               <Image
                 src={pathname === item.href ? item.activeIcon : item.icon}
-                alt="Menus"
+                alt={`${item.label} Icon`}
                 width={16}
                 height={16}
               />
