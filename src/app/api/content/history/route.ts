@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
       query.$or = [
         { productName: { $regex: escapedSearch, $options: "i" } },
         { headline: { $regex: escapedSearch, $options: "i" } },
-        { productDescription: { $regex: escapedSearch, $options: "i" } },
       ];
     }
 

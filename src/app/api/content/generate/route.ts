@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
 import dbConnect from "@/src/lib/dbConnect";
 import GeneratedSales from "@/src/models/GeneratedSales";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 if (!process.env.GEMINI_API_KEY) {
@@ -26,7 +26,7 @@ TARGET AUDIENCE: ${data.targetAudience}
 PRICE: ${data.price}
 UNIQUE SELLING POINTS: ${data.usp}
 
-Generate the following sections in Indonesian language (Bahasa Indonesia):
+Generate the following sections in English as general language or using any languages depending on user want to be:
 
 1. HEADLINE: A compelling, attention-grabbing headline (max 15 words)
 2. SUB-HEADLINE: Supporting line that reinforces the headline (max 20 words)
@@ -47,7 +47,40 @@ Return the response as a JSON object with this exact structure:
   "callToAction": "..."
 }
 
-IMPORTANT: Write ALL content in Indonesian language. Make it persuasive, benefit-driven, and suitable for ${data.targetAudience}.`;
+IMPORTANT: Write ALL content in English language or anything else. Make it persuasive, benefit-driven, and suitable for ${data.targetAudience}.`;
+}
+
+function isApiError(
+  error: unknown,
+): error is { status?: number; message?: string } {
+  return typeof error === "object" && error !== null;
+}
+
+export async function generateWithRetry(
+  model: GenerativeModel,
+  prompt: string,
+  maxRetries = 3,
+) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const result = await model.generateContent(prompt);
+      return result;
+    } catch (error: unknown) {
+      if (
+        isApiError(error) &&
+        (error.status === 503 ||
+          error.status === 429 ||
+          String(error.message).includes("429")) &&
+        i < maxRetries - 1
+      ) {
+        console.log(`Model busy, retrying in ${(i + 1) * 2} seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, (i + 1) * 2000));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error("Failed to generate content after retries.");
 }
 
 export async function POST(request: NextRequest) {
@@ -87,7 +120,7 @@ export async function POST(request: NextRequest) {
       !usp
     ) {
       return NextResponse.json(
-        { message: "All fields are required" },
+        { message: "All fields are required." },
         { status: 400 },
       );
     }
@@ -102,7 +135,7 @@ export async function POST(request: NextRequest) {
     });
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-lite",
+      model: "gemma-4-26b-a4b-it",
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 1500,
@@ -111,7 +144,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const result = await model.generateContent(prompt);
+    const result = await generateWithRetry(model, prompt);
     const responseText = result.response.text();
     if (!responseText) {
       return NextResponse.json(
@@ -138,8 +171,14 @@ export async function POST(request: NextRequest) {
 
     const fullHtml = buildFullHtml({
       productName,
-      ...aiResponse,
       price,
+      headline: aiResponse.headline,
+      subHeadline: aiResponse.subHeadline,
+      benefitsSection: aiResponse.benefitsSection,
+      featuresBreakdown: aiResponse.featuresBreakdown,
+      socialProofPlaceholder: aiResponse.socialProofPlaceholder,
+      pricingDisplay: aiResponse.pricingDisplay,
+      callToAction: aiResponse.callToAction,
     });
 
     await dbConnect();
@@ -161,10 +200,22 @@ export async function POST(request: NextRequest) {
       fullHtml,
     });
 
+    console.log("=== API GENERATE RESPONSE ===");
+    console.log("Generated Sales Page ID:", generatedSalesPage._id);
+    console.log("Full HTML length:", generatedSalesPage.fullHtml?.length);
+    console.log(
+      "Full HTML preview:",
+      generatedSalesPage.fullHtml?.substring(0, 200),
+    );
+    console.log("==============================");
+
     return NextResponse.json({
       message: "Sales page generated successfully.",
       data: {
-        generatedSalesPage,
+        _id: generatedSalesPage._id,
+        productName: generatedSalesPage.productName,
+        headline: generatedSalesPage.headline,
+        fullHtml: generatedSalesPage.fullHtml,
       },
     });
   } catch (error) {
@@ -224,41 +275,41 @@ function buildFullHtml(data: {
   <title>${safe.productName} | Sales Page</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-base-300">
   <div class="max-w-4xl mx-auto py-12 px-4">
-    <div class="text-center mb-12">
-      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">${safe.headline}</h1>
-      <p class="text-xl text-gray-600">${safe.subHeadline}</p>
+    <div class="flex flex-col gap-4 items-center mb-12">
+      <h1 class="text-2xl md:text-4xl font-bold text-primary text-center line-clamp-1 font-poppins">${safe.headline}</h1>
+      <p class="text-lg md:text-xl text-gray-500 font-semibold text-center">${safe.subHeadline}</p>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">✨ Manfaat Yang Akan Anda Dapatkan</h2>
-      <div class="prose max-w-none text-gray-700">${safe.benefitsSection}</div>
+    <div class="bg-base-100 rounded-2xl shadow-xl p-8 mb-8">
+      <h2 class="text-xl md:text-2xl font-bold text-white mb-6 text-center">✨ Benefits You Got</h2>
+      <div class="max-w-none text-gray-500 font-medium text-sm md:text-base">${safe.benefitsSection}</div>
     </div>
 
-    <div class="bg-linear-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 mb-8">
-      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">⚙️ Fitur Unggulan</h2>
-      <div class="prose max-w-none text-gray-700">${safe.featuresBreakdown}</div>
+    <div class="bg-base-100 rounded-2xl shadow-xl p-8 mb-8">
+      <h2 class="text-xl md:text-2xl font-bold text-white mb-6 text-center">⚙️ Features</h2>
+      <div class="max-w-none text-gray-500 font-medium text-sm md:text-base">${safe.featuresBreakdown}</div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">💬 Testimoni Pelanggan</h2>
-      <div class="prose max-w-none text-gray-700 italic">${safe.socialProofPlaceholder}</div>
+    <div class="bg-base-100 rounded-2xl shadow-xl p-8 mb-8">
+      <h2 class="text-xl md:text-2xl font-bold text-white mb-6 text-center">💬 Customer Testimonials</h2>
+      <div class="max-w-none text-gray-500 font-medium text-sm md:text-base italic">${safe.socialProofPlaceholder}</div>
     </div>
 
-    <div class="bg-linear-to-r from-green-50 to-emerald-50 rounded-2xl p-8 mb-8 text-center">
-      <h2 class="text-2xl font-bold text-gray-900 mb-4">💰 Harga Spesial</h2>
-      <div class="text-4xl font-bold text-green-600 mb-2">${safe.price}</div>
-      <div class="prose max-w-none text-gray-700">${safe.pricingDisplay}</div>
+    <div class="bg-base-100 rounded-2xl shadow-xl p-8 mb-8">
+      <h2 class="text-xl md:text-2xl font-bold text-white mb-4 text-center">💰 Special Price</h2>
+      <div class="text-2xl md:text-4xl font-bold text-warning mb-2 text-center">${safe.price}</div>
+      <div class="max-w-none text-gray-500 font-medium text-sm md:text-base">${safe.pricingDisplay}</div>
     </div>
 
     <div class="text-center">
-      <button class="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xl py-4 px-12 rounded-full shadow-lg transition duration-300 transform hover:scale-105">
+      <button class="bg-secondary hover:bg-secondary/70 text-white font-bold text-base md:text-lg py-4 px-12 rounded-full shadow-lg transition duration-300 transform hover:scale-105">
         ${safe.callToAction}
       </button>
     </div>
 
-    <footer class="text-center text-gray-400 text-sm mt-12">
+    <footer class="text-center text-gray-500 text-sm mt-12">
       © ${new Date().getFullYear()} ${safe.productName}. All rights reserved.
     </footer>
   </div>

@@ -4,7 +4,6 @@ import dbConnect from "@/src/lib/dbConnect";
 import GeneratedSales from "@/src/models/GeneratedSales";
 import mongoose from "mongoose";
 
-// Get a Sales Page By Id
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -36,14 +35,33 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ data: sales });
+    return NextResponse.json({
+      data: {
+        _id: sales._id,
+        productName: sales.productName,
+        productDescription: sales.productDescription,
+        headline: sales.headline,
+        subHeadline: sales.subHeadline,
+        benefitsSection: sales.benefitsSection,
+        featuresBreakdown: sales.featuresBreakdown,
+        socialProofPlaceholder: sales.socialProofPlaceholder,
+        pricingDisplay: sales.pricingDisplay,
+        callToAction: sales.callToAction,
+        price: sales.price,
+        usp: sales.usp,
+        features: sales.features,
+        targetAudience: sales.targetAudience,
+        fullHtml: sales.fullHtml || "",
+        createdAt: sales.createdAt,
+        updatedAt: sales.updatedAt,
+      },
+    });
   } catch (error) {
     console.error("GET method error:", error);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
 
-// Delete a Sales Page
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

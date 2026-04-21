@@ -42,9 +42,10 @@ export default function PreviewPage() {
   if (loading) return <LoadingSpinner />;
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-600">❌ Error: {error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-base-300">
+        <div className="flex items-center gap-2 bg-error/20 border border-error rounded-lg p-6">
+          <p className="font-bold text-error">Error:</p>
+          <p className="font-medium text-error/80">{error}</p>
         </div>
       </div>
     );

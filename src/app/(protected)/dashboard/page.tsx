@@ -4,6 +4,12 @@ import { useState, FormEvent, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/src/components/LoadingSpinner";
+import Image from "next/image";
+
+import generateSalesPageIcon from "@/src/assets/generate-sales-page.png";
+import salesPageGeneratedIcon from "@/src/assets/sales-page-generated.png";
+import previewIcon from "@/src/assets/preview.png";
+import exportIcon from "@/src/assets/export.png";
 
 interface GeneratedSales {
   _id: string;
@@ -68,7 +74,25 @@ export default function DashboardPage() {
         throw new Error(data.message || "Failed to generate sales page.");
       }
 
-      setGenerated(data.data);
+      const generatedId = data.data._id;
+      console.log("Generated ID:", generatedId);
+
+      const fetchResponse = await fetch(`/api/content/${generatedId}`);
+      const fullData = await fetchResponse.json();
+
+      console.log("Fetch from DB response:", fullData);
+      console.log(
+        "Full HTML from DB:",
+        fullData.data?.fullHtml?.substring(0, 100),
+      );
+
+      if (fullData.data && fullData.data.fullHtml) {
+        setGenerated(fullData.data);
+        console.log("Full HTML length:", fullData.data.fullHtml.length);
+      } else {
+        console.warn("No fullHtml in response, using original data.");
+        setGenerated(data.data);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unexpected error occurred",
@@ -78,104 +102,178 @@ export default function DashboardPage() {
     }
   };
 
+  const handleExportHTML = () => {
+    if (!generated) {
+      alert("No sales page to export.");
+      return;
+    }
+
+    if (!generated.fullHtml) {
+      console.error("fullHtml is missing:", generated);
+      alert("HTML content not available. Please try generating again.");
+      return;
+    }
+
+    if (generated.fullHtml.length < 100) {
+      console.warn("fullHtml seems too short:", generated.fullHtml.length);
+      alert("HTML content seems incomplete. Please try generating again.");
+      return;
+    }
+
+    const blob = new Blob([generated.fullHtml], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+
+    const safeFileName = (generated.productName || "sales_page")
+      .replace(/[^a-z0-9]/gi, "_")
+      .substring(0, 50);
+    a.download = `sales_${safeFileName}.html`;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log("Export successful, file downloaded as:", a.download);
+  };
+
+  useEffect(() => {
+    if (generated) {
+      console.log("=== DEBUG GENERATED OBJECT ===");
+      console.log("generated:", generated);
+      console.log("generated._id:", generated._id);
+      console.log("generated.productName:", generated.productName);
+      console.log("generated.headline:", generated.headline);
+      console.log("generated.fullHtml:", generated.fullHtml);
+      console.log("generated.fullHtml type:", typeof generated.fullHtml);
+      console.log("generated.fullHtml length:", generated.fullHtml?.length);
+      console.log("==============================");
+    }
+  }, [generated]);
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome, {session?.user?.name || "User"}! 👋
+      <div className="bg-base-100 rounded-lg shadow-lg p-6">
+        <h1 className="text-2xl font-bold text-primary font-poppins">
+          Welcome, {session?.user?.name || "User"}!
         </h1>
-        <p className="text-gray-600 mt-2">
-          Create a high-converting sales page with AI-Powered in a couple of
-          minutes.
+        <p className="text-gray-500 mt-2 font-medium">
+          Create a high-converting sales page with AI-Powered in couple of
+          minutes
         </p>
       </div>
 
-      {/* Form Generate */}
-      <div className="bg-white rounded-lg shadow p-6 text-gray-700">
-        <h2 className="text-xl font-semibold mb-4">🚀 Generate Sales Page</h2>
+      <div className="bg-base-100 rounded-lg shadow-lg p-6">
+        <div className="flex gap-3 mb-4">
+          <Image
+            src={generateSalesPageIcon}
+            alt="Generate Sales Page Icon"
+            width={32}
+            height={32}
+          />
+          <h2 className="text-xl font-bold text-primary">
+            Generate Sales Page
+          </h2>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Product/Service Name *
-            </label>
-            <input
-              type="text"
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-              placeholder="e.g., AI Copywriter Pro, Fitness 30 Days..."
-              className="w-full border border-gray-300 text-black rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-1 text-sm font-semibold">
+                <label className="block text-[#d6d6d6]">
+                  Product/Service Name
+                </label>
+                <span className="block text-error">*</span>
+              </div>
+              <input
+                type="text"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                placeholder="e.g., AI Copywriter Pro, Fitness 30 Days..."
+                className="w-full text-gray-500 font-semibold rounded-lg px-4 py-2 bg-base-300"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-1 text-sm font-semibold">
+                <label className="block text-[#d6d6d6]">
+                  Key Features (comma separated)
+                </label>
+                <span className="block text-error">*</span>
+              </div>
+              <input
+                type="text"
+                value={features}
+                onChange={(e) => setFeatures(e.target.value)}
+                placeholder="e.g., Easy to use, 24/7 support, Money back guarantee"
+                className="w-full text-gray-500 font-semibold rounded-lg px-4 py-2 bg-base-300"
+                required
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description *
-            </label>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-1 text-sm font-semibold">
+              <label className="block text-[#d6d6d6]">Description</label>
+              <span className="block text-error">*</span>
+            </div>
             <textarea
               value={productDescription}
               onChange={(e) => setProductDescription(e.target.value)}
               placeholder="Describe your product/service in detail..."
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+              className="w-full text-gray-500 font-semibold rounded-lg px-4 py-2 bg-base-300"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Key Features (comma separated) *
-            </label>
-            <input
-              type="text"
-              value={features}
-              onChange={(e) => setFeatures(e.target.value)}
-              placeholder="e.g., Easy to use, 24/7 support, Money back guarantee"
-              className="w-full border border-gray-300 text-black rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-1 text-sm font-semibold">
+                <label className="block text-[#d6d6d6]">Target Audience </label>
+                <span className="block text-error">*</span>
+              </div>
+              <input
+                type="text"
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                placeholder="e.g., Small business owners, Fitness enthusiasts, Students"
+                className="w-full text-gray-500 font-semibold rounded-lg px-4 py-2 bg-base-300"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-1 text-sm font-semibold">
+                <label className="block text-[#d6d6d6]">Price </label>
+                <span className="block text-error">*</span>
+              </div>
+              <input
+                type="text"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="Input your product price"
+                className="w-full text-gray-500 font-semibold rounded-lg px-4 py-2 bg-base-300"
+                required
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Target Audience *
-            </label>
-            <input
-              type="text"
-              value={targetAudience}
-              onChange={(e) => setTargetAudience(e.target.value)}
-              placeholder="e.g., Small business owners, Fitness enthusiasts, Students"
-              className="w-full border border-gray-300 text-black rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price *
-            </label>
-            <input
-              type="text"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Input your product price"
-              className="w-full border border-gray-300 text-black rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Unique Selling Points *
-            </label>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-1 text-sm font-semibold">
+              <label className="block text-[#d6d6d6]">
+                Unique Selling Point{" "}
+              </label>
+              <span className="block text-error">*</span>
+            </div>
             <textarea
               value={usp}
               onChange={(e) => setUsp(e.target.value)}
               placeholder="What makes your product special? Why should customers choose you?"
               rows={2}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+              className="w-full text-gray-500 font-semibold rounded-lg px-4 py-2 bg-base-300"
               required
             />
           </div>
@@ -183,7 +281,7 @@ export default function DashboardPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-secondary hover:bg-secondary/70 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-3"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -210,16 +308,15 @@ export default function DashboardPage() {
                 Generating...
               </span>
             ) : (
-              "🚀 Generate Sales Page"
+              "Generate Sales Page"
             )}
           </button>
         </form>
       </div>
 
-      {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-red-700">
+        <div className="bg-error/20 border border-error rounded-lg p-4">
+          <div className="flex items-center gap-2">
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
@@ -227,51 +324,66 @@ export default function DashboardPage() {
                 clipRule="evenodd"
               />
             </svg>
-            <span className="font-bold">Error:</span>
-            <span className="font-medium">{error}</span>
+            <span className="font-bold text-error">Error:</span>
+            <span className="font-medium text-error/80">{error}</span>
           </div>
         </div>
       )}
 
-      {/* Hasil Generasi */}
       {generated && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-base-100 rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-            <h2 className="text-xl font-semibold">📄 Sales Page Generated</h2>
+            <div className="flex gap-3 mb-4">
+              <Image
+                src={salesPageGeneratedIcon}
+                alt="Sales Page Generated Icon"
+                width={32}
+                height={32}
+              />
+              <h2 className="text-xl font-bold text-primary">
+                Sales Page Generated
+              </h2>
+            </div>
             <div className="flex gap-2">
               <a
                 href={`/preview/${generated._id}`}
                 target="_blank"
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
+                className="bg-secondary hover:bg-secondary/70 flex gap-2 px-4 py-2 rounded-lg"
               >
-                👁️ Live Preview
+                <Image
+                  src={previewIcon}
+                  alt="Preview Icon"
+                  width={16}
+                  height={16}
+                />
+                <span className="text-white font-medium text-sm md:text-base">
+                  Live Preview
+                </span>
               </a>
               <button
-                onClick={() => {
-                  const blob = new Blob([generated.fullHtml], {
-                    type: "text/html",
-                  });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  const safeName = generated.productName
-                    .replace(/[<>:"/\\|?*\s]+/g, "_")
-                    .replace(/^_+|_+$/g, "");
-                  a.download = `sales_${safeName || "page"}.html`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+                onClick={handleExportHTML}
+                className="bg-legendary hover:bg-legendary/70 flex gap-2 px-4 py-2 rounded-lg"
               >
-                💾 Export HTML
+                <Image
+                  src={exportIcon}
+                  alt="Preview Icon"
+                  width={16}
+                  height={16}
+                />
+                <span className="text-white font-medium text-sm md:text-base">
+                  Export HTML
+                </span>
               </button>
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-3 mb-4 text-sm text-gray-600 flex flex-wrap gap-4">
-            <p className="text-green-600 font-semibold">
-              ✓ Headline: {generated.headline}
-            </p>
+          <div className="rounded-lg p-3 mb-1 flex flex-wrap gap-4">
+            <span className="text-success font-semibold text-sm">
+              ✓ Headline:{" "}
+              <p className="text-gray-500">
+                {generated.headline || "Generated successfully"}
+              </p>
+            </span>
             <p className="text-sm text-gray-500 mt-2">
               Sales page saved to history. Click &quot;Live Preview&quot; to see
               the full page!

@@ -4,6 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/src/components/LoadingSpinner";
+import Image from "next/image";
+
+import salesPageHistoryIcon from "@/src/assets/sales-page-history.png";
+import notFoundIcon from "@/src/assets/not-found.png";
+import priceIcon from "@/src/assets/price.png";
 
 interface HistoryItem {
   _id: string;
@@ -22,6 +27,7 @@ export default function HistoryPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [error, setError] = useState("");
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -90,6 +96,53 @@ export default function HistoryPage() {
     }
   };
 
+  const handleExportHTML = async (id: string, productName: string) => {
+    setExportingId(id);
+
+    try {
+      const response = await fetch(`/api/content/${id}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch sales page data.");
+      }
+
+      if (!data.data || !data.data.fullHtml) {
+        alert("HTML content not available for this sales page.");
+        return;
+      }
+
+      const fullHtml = data.data.fullHtml;
+
+      if (fullHtml.length < 100) {
+        alert("HTML content seems incomplete.");
+        return;
+      }
+
+      const blob = new Blob([fullHtml], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+
+      const safeFileName = (productName || "sales_page")
+        .replace(/[^a-z0-9]/gi, "_")
+        .substring(0, 50);
+      a.download = `sales_${safeFileName}.html`;
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log("Export successful:", a.download);
+    } catch (err) {
+      console.error("Export error:", err);
+      alert("Failed to export HTML. Please try again.");
+    } finally {
+      setExportingId(null);
+    }
+  };
+
   if (status === "loading") {
     return <LoadingSpinner />;
   }
@@ -100,16 +153,24 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-linear-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
-        <h1 className="text-2xl font-bold">📜 Sales Page History</h1>
-        <p className="text-purple-100 mt-2">
+      <div className="bg-base-100 rounded-lg shadow-lg p-6">
+        <div className="flex gap-3">
+          <Image
+            src={salesPageHistoryIcon}
+            alt="Sales Page History Icon"
+            width={36}
+            height={36}
+          />
+          <h1 className="text-2xl font-bold text-primary font-poppins">
+            Sales Page History
+          </h1>
+        </div>
+        <p className="text-gray-500 mt-2 font-medium">
           View, search, and manage all your AI-generated sales pages
         </p>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="bg-base-100 rounded-xl shadow-lg p-6">
         <form
           onSubmit={handleSearch}
           className="flex flex-col sm:flex-row gap-3"
@@ -119,11 +180,11 @@ export default function HistoryPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by product name or headline..."
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+            className="flex-1 bg-base-300 text-gray-500 font-medium rounded-lg px-4 py-2"
           />
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition"
+            className="bg-secondary hover:bg-secondary/70 text-white px-6 py-2 rounded-lg transition"
           >
             Search
           </button>
@@ -131,7 +192,7 @@ export default function HistoryPage() {
             <button
               type="button"
               onClick={handleReset}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition"
+              className="bg-legendary hover:bg-legendary/70 text-white px-6 py-2 rounded-lg transition"
             >
               Reset
             </button>
@@ -144,70 +205,119 @@ export default function HistoryPage() {
         )}
       </div>
 
-      {/* Content */}
       {loading ? (
         <div className="flex justify-center py-20">
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-600">❌ {error}</p>
+        <div className="bg-error/20 border border-error rounded-lg p-6">
+          <p className="text-error text-center">❌ {error}</p>
         </div>
       ) : histories.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-          <div className="text-6xl mb-4">📭</div>
-          <h3 className="text-xl font-semibold mb-2">No sales pages yet</h3>
-          <p className="text-gray-500 mb-4">
+        <div className="bg-base-100 rounded-xl shadow-lg p-12 flex flex-col items-center">
+          <Image
+            src={notFoundIcon}
+            alt="Generate Sales Page Icon"
+            width={64}
+            height={64}
+            className="mb-4"
+          />
+          <h3 className="text-xl font-bold mb-2">No sales pages yet</h3>
+          <p className="text-gray-500 mb-4 font-semibold">
             {search ? "No matches found." : "Create your first sales page!"}
           </p>
           <a
             href="/dashboard"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg inline-block"
+            className="bg-secondary hover:bg-secondary/70 text-white px-6 py-2 font-semibold rounded-lg inline-block"
           >
-            ✨ Create Sales Page
+            Create Sales Page
           </a>
         </div>
       ) : (
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 font-medium">
             Showing {histories.length} sales page(s)
           </p>
           <div className="grid grid-cols-1 gap-4">
             {histories.map((item) => (
               <div
                 key={item._id}
-                className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition"
+                className="bg-base-100 rounded-xl shadow-lg overflow-hidden transition"
               >
                 <div className="p-6">
                   <div className="flex justify-between items-start flex-wrap gap-2">
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900">
+                      <h3 className="text-xl font-bold text-primary">
                         {item.productName}
                       </h3>
-                      <p className="text-green-600 font-medium mt-1">
-                        💰 {item.price}
-                      </p>
+                      <div className="flex gap-3 mt-1">
+                        <Image
+                          src={priceIcon}
+                          alt="Price Icon"
+                          width={12}
+                          height={12}
+                        />
+                        <p className="text-warning font-semibold mt-1">
+                          {item.price}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <a
                         href={`/preview/${item._id}`}
                         target="_blank"
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm transition"
+                        className="bg-secondary hover:bg-secondary/70 font-medium text-white px-3 py-1.5 rounded-lg text-sm transition"
                       >
                         Preview
                       </a>
                       <button
+                        onClick={() =>
+                          handleExportHTML(item._id, item.productName)
+                        }
+                        disabled={exportingId === item._id}
+                        className="bg-legendary hover:bg-legendary/70 font-medium text-white px-3 py-1.5 rounded-lg text-sm transition disabled:opacity-50 cursor-pointer"
+                      >
+                        {exportingId === item._id ? (
+                          <span className="flex items-center gap-1">
+                            <svg
+                              className="animate-spin h-3 w-3 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            Exporting...
+                          </span>
+                        ) : (
+                          "Export HTML"
+                        )}
+                      </button>
+
+                      <button
                         onClick={() => handleDelete(item._id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm transition"
+                        className="bg-error hover:bg-error/70 font-medium text-base-200 px-3 py-1.5 rounded-lg text-sm transition cursor-pointer"
                       >
                         Delete
                       </button>
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                  <p className="text-gray-500 font-medium text-sm mt-2 line-clamp-2">
                     {item.headline}
                   </p>
-                  <p className="text-xs text-gray-400 mt-3">
+                  <p className="text-xs text-gray-500/70 font-medium mt-3">
                     Created: {new Date(item.createdAt).toLocaleString()}
                   </p>
                 </div>
